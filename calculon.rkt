@@ -6,7 +6,6 @@
 ;; TODO
 ;; - Avoid these horrible set!'s
 ;; - Define a button with min-width 30 and use it for the buttons
-;; - Be safe about div-by-0
 
 
 (define current-number 0)
@@ -158,8 +157,16 @@
      [label "="]
      [min-width 30]
      [callback (lambda (button event)
+                 (define f (get-function current-operation))
                  (set! op2 current-number)
-                 (set! current-number ((get-function current-operation) op1 op2))
+                 (set! current-number
+                       (cond
+                         [(equal? f /)
+                          (if (= op2 0)
+                              (error "Attempted div-by-0\n")
+                              (f op1 op2))]
+                         [else
+                          (f op1 op2)]))
                  (set! op1 0)
                  (set! op2 0)
                  (send display$ set-value (number->string current-number)))])
