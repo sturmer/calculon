@@ -6,12 +6,14 @@
 ;; TODO
 ;; - Avoid these horrible set!'s
 ;; - Define a button with min-width 30 and use it for the buttons
+;; - Be safe about div-by-0
 
 
 (define current-number 0)
 (define op1 0)
 (define op2 0)
-(define decimal-point #f)
+(define decimal-point? #f)
+(define decimal-positions 0)
 (define current-operation null)
 
 (define (get-function fname)
@@ -22,15 +24,26 @@
     [(equal? fname "*") *]))
 
 (define (push-number button)
-  (set! current-number (+ 
-                        (* current-number 10) 
-                        (string->number (send button get-label))))
+  (define button-value (string->number (send button get-label)))
+  (set! current-number
+        (cond
+          [(not decimal-point?)
+           (+
+            (* current-number 10)
+            button-value)]
+          [else
+           (set! decimal-positions (add1 decimal-positions))
+           (+
+            current-number
+            (/ button-value (expt 10 decimal-positions)))]))
   (send display$ set-value (number->string current-number)))
 
 (define (push-operation button)
   (set! current-operation (send button get-label))
   (set! op1 current-number) ; assuming we only do op1 op op2
-  (set! current-number 0))
+  (set! current-number 0)
+  (set! decimal-positions 0)
+  (set! decimal-point? #f))
 
 (define frame (new frame% [label "Calculon"]))
 
@@ -135,7 +148,11 @@
      [label "."]
      [min-width 30]
      [callback (lambda (button event)
-                 (set! decimal-point #t))])
+                 (cond
+                   [(not decimal-point?)
+                    (set! decimal-point? #t)]
+                   [else
+                    (printf "Already added the decimal point!\n")]))])
 
 (new button% [parent row4]
      [label "="]
