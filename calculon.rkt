@@ -16,11 +16,11 @@
 (define current-operation null)
 
 (define (get-function fname)
-  (cond
-    [(equal? fname "+") +]
-    [(equal? fname "-") -]
-    [(equal? fname "/") /]
-    [(equal? fname "*") *]))
+  (match fname
+    ["+" +]
+    ["-" -]
+    ["*" *]
+    ["/" /]))
 
 (define (push-number button)
   (define button-value (string->number (send button get-label)))
@@ -160,12 +160,12 @@
                  (define f (get-function current-operation))
                  (set! op2 current-number)
                  (set! current-number
-                       (cond
-                         [(equal? f /)
+                       (match f
+                         [/
                           (if (= op2 0)
                               (error "Attempted div-by-0\n")
                               (f op1 op2))]
-                         [else
+                         [_
                           (f op1 op2)]))
                  (set! op1 0)
                  (set! op2 0)
