@@ -4,16 +4,11 @@
 
 
 ;; TODO
-;; - Avoid these horrible set!'s
+;; - Keep the current-number a string to which we append until we need to use 
+;;     it as a number
 ;; - Define a button with min-width 30 and use it for the buttons
-
-
-(define current-number 0)
-(define op1 0)
-(define op2 0)
-(define decimal-point? #f)
-(define decimal-positions 0)
-(define current-operation null)
+;; - Use x and the real division sign for the respective operations
+;; - Allow expressions with parenthesis
 
 (define (get-function fname)
   (match fname
@@ -23,33 +18,33 @@
     ["/" /]))
 
 (define (push-number button)
-  (define button-value (string->number (send button get-label)))
-  (set! current-number
-        (cond
-          [(not decimal-point?)
-           (+
-            (* current-number 10)
-            button-value)]
-          [else
-           (set! decimal-positions (add1 decimal-positions))
-           (+
-            current-number
-            (/ button-value (expt 10 decimal-positions)))]))
-  (send display$ set-value (number->string current-number)))
+  (define button-value (send button get-label))
+  (define current-display (send display$ get-value))
+  (match button-value
+    [(regexp #rx"[0-9]")
+     (let ([result
+            (match current-display    
+              [(regexp #rx"^0") button-value]
+              [_ (string-append current-display button-value)])])
+       (send display$ set-value result))]
+    [_ (send display$ set-value current-display)]))
 
-(define (push-operation button)
-  (set! current-operation (send button get-label))
-  (set! op1 current-number) ; assuming we only do op1 op op2
-  (set! current-number 0)
-  (set! decimal-positions 0)
-  (set! decimal-point? #f))
+(define (push-operation button)  
+  (define acc (send display$ get-value))
+  (define current-operation (send button get-label))
+  (send display$ set-value (string-append acc current-operation)))
+
+(define (push-equal)
+  (define result 0)
+  (send display$ set-value (number->string result)))
 
 (define frame (new frame% [label "Calculon"]))
 
 (define display$ (new text-field%
                       (label "")
                       (parent frame)
-                      (init-value "0")))
+                      (init-value "0")
+                      (enabled #f)))
 
 ;; Row 1: 9 8 7 +
 (define row1 (new horizontal-panel% [parent frame]))
@@ -59,25 +54,25 @@
 (new button% [parent row1]
      [label "9"]
      [min-width 30]
-     [callback (lambda (button event)
+     [callback (λ (button event)
                  (push-number button))])
 
 (new button% [parent row1]
      [label "8"]
      [min-width 30]
-     [callback (lambda (button event)
+     [callback (λ (button event)
                  (push-number button))])
 
 (new button% [parent row1]
      [label "7"]
      [min-width 30]
-     [callback (lambda (button event)
+     [callback (λ (button event)
                  (push-number button))])
 
 (new button% [parent row1]
      [label "+"]
      [min-width 30]     
-     [callback (lambda (button event)
+     [callback (λ (button event)
                  (push-operation button))])
 
 ;; Row 2: 6 5 4 -
@@ -86,25 +81,25 @@
 (new button% [parent row2]
      [label "6"]
      [min-width 30]     
-     [callback (lambda (button event)
+     [callback (λ (button event)
                  (push-number button))])
 
 (new button% [parent row2]
      [label "5"]
      [min-width 30]
-     [callback (lambda (button event)
+     [callback (λ (button event)
                  (push-number button))])
 
 (new button% [parent row2]
      [label "4"]
      [min-width 30]
-     [callback (lambda (button event)
+     [callback (λ (button event)
                  (push-number button))])
 
 (new button% [parent row2]
      [label "-"]
      [min-width 30]
-     [callback (lambda (button event)
+     [callback (λ (button event)
                  (push-operation button))])
 
 ;; Row 3: 3 2 1 *
@@ -113,25 +108,25 @@
 (new button% [parent row3]
      [label "3"]
      [min-width 30]
-     [callback (lambda (button event)
+     [callback (λ (button event)
                  (push-number button))])
 
 (new button% [parent row3]
      [label "2"]
      [min-width 30]
-     [callback (lambda (button event)
+     [callback (λ (button event)
                  (push-number button))])
 
 (new button% [parent row3]
      [label "1"]
      [min-width 30]
-     [callback (lambda (button event)
+     [callback (λ (button event)
                  (push-number button))])
 
 (new button% [parent row3]
      [label "*"]
      [min-width 30]
-     [callback (lambda (button event)
+     [callback (λ (button event)
                  (push-operation button))])
 
 ;; Row 4: 0 . = /
@@ -140,41 +135,27 @@
 (new button% [parent row4]
      [label "0"]
      [min-width 30]
-     [callback (lambda (button event)
+     [callback (λ (button event)
                  (push-number button))])
 
 (new button% [parent row4]
      [label "."]
      [min-width 30]
-     [callback (lambda (button event)
-                 (cond
-                   [(not decimal-point?)
-                    (set! decimal-point? #t)]
-                   [else
-                    (printf "Already added the decimal point!\n")]))])
+     [callback (λ (button event)
+                 (push-number button))])  #| find a better name for the function; 
+                                             also do something with the decimal point 
+                                             (again) |#
 
 (new button% [parent row4]
      [label "="]
      [min-width 30]
-     [callback (lambda (button event)
-                 (define f (get-function current-operation))
-                 (set! op2 current-number)
-                 (set! current-number
-                       (match f
-                         [/
-                          (if (= op2 0)
-                              (error "Attempted div-by-0\n")
-                              (f op1 op2))]
-                         [_
-                          (f op1 op2)]))
-                 (set! op1 0)
-                 (set! op2 0)
-                 (send display$ set-value (number->string current-number)))])
+     [callback (λ (button event) ; ASK: do we still need the args if unused?
+                 push-equal)])
 
 (new button% [parent row4]
      [label "/"]
      [min-width 30]
-     [callback (lambda (button event)
+     [callback (λ (button event)
                  (push-operation button))])
 
 (send frame show #t)
