@@ -3,8 +3,6 @@
 ;; A simple calculator
 
 ;; TODO
-;; - Keep the current-number a string to which we append until we need to use 
-;;     it as a number
 ;; - Define a button with min-width 30 and use it for the buttons
 ;; - Allow expressions with parenthesis
 
@@ -55,6 +53,26 @@
                       (label "")
                       (parent frame)
                       (init-value "0")))
+
+;; Row 0: ? ? sqrt C
+(define row0 (new horizontal-panel% [parent frame]))
+(new button% [parent row0]
+     [label ""]
+     [min-width 30]
+     [enabled #f])
+(new button% [parent row0]
+     [label ""]
+     [min-width 30]
+     [enabled #f])
+(new button% [parent row0]
+     [label ""]
+     [min-width 30]
+     [enabled #f])
+(new button% [parent row0]
+     [label "R"]
+     [min-width 30]
+     [callback (λ (b e)
+                 (send display$ set-value "0"))])
 
 ;; Row 1: 9 8 7 +
 (define row1 (new horizontal-panel% [parent frame]))
