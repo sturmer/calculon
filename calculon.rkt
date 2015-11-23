@@ -19,7 +19,7 @@
   (define button-value (send button get-label))
   (define current-display (send display$ get-value))
   (match button-value
-    [(regexp #rx"[0-9]")
+    [(regexp #rx"[0-9\\.]")
      (let ([result
             (match current-display    
               [(regexp #rx"^0") button-value]
@@ -38,7 +38,7 @@
   (define expr (send display$ get-value))
   (printf "expr = '~a'\n" expr)
   (define ops-lst (regexp-match
-                   #px"(\\d+)\\s*([-÷+×])\\s*(\\d+)"
+                   #px"(\\d+[./]?\\d*)\\s*([-÷+×])\\s*(\\d+[./]?\\d*)"
                    expr))
   (define result 0)
   (match ops-lst
