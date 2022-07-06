@@ -5,12 +5,12 @@
 ;; A simple calculator
 
 ;; TODO
-;; Add something
+;; Add something else instead
 ;; - Define a button with min-width 30 and use it for the buttons
 ;; - Allow expressions with parenthesis
 
 ;; GUI-related functions
-;; More than one change
+;; More than one change at a time.
 ;; Push a button of an operation (+, -, ...)
 (define (push-operation op)
   (send display$ set-value (string-append (send display$ get-value) op)))
