@@ -5,7 +5,6 @@
 ;; A simple calculator
 
 ;; TODO
-;; - Unit testing (at least the callbacks)
 ;; - Define a button with min-width 30 and use it for the buttons
 ;; - Allow expressions with parenthesis
 
